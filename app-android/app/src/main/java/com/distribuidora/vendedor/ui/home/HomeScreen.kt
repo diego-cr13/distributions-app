@@ -14,6 +14,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
@@ -69,19 +70,21 @@ fun HomeScreen(
 
     LaunchedEffect(Unit) { viewModel.onEnter() }
 
+    // The status is cleared only after the snackbar was shown: clearing first would
+    // restart this effect (keyed on the status) and cancel the snackbar.
     LaunchedEffect(syncStatus) {
         when (val status = syncStatus) {
             is SyncStatus.Success -> {
+                snackbar.showSnackbar(syncDoneText, duration = SnackbarDuration.Short)
                 viewModel.clearSyncStatus()
-                snackbar.showSnackbar(syncDoneText)
             }
             is SyncStatus.Failure -> {
-                viewModel.clearSyncStatus()
                 val detail = when (val error = status.error) {
                     is SyncError.Network -> noNetworkText
                     else -> error.message ?: ""
                 }
-                snackbar.showSnackbar("$syncFailedText: $detail")
+                snackbar.showSnackbar("$syncFailedText: $detail", duration = SnackbarDuration.Long)
+                viewModel.clearSyncStatus()
             }
             else -> Unit
         }

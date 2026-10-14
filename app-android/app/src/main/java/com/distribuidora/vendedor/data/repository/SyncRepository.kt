@@ -1,5 +1,6 @@
 package com.distribuidora.vendedor.data.repository
 
+import android.util.Log
 import com.distribuidora.vendedor.core.OrderStatus
 import com.distribuidora.vendedor.core.toMoney
 import com.distribuidora.vendedor.core.toMoneyString
@@ -58,14 +59,17 @@ class SyncRepository(
     suspend fun syncAll() {
         syncMutex.withLock {
             _status.value = SyncStatus.Running
+            Log.i(TAG, "Sync started")
             try {
                 checkProfile()
                 uploadPending()
                 downloadCatalog()
                 downloadOwnOrders()
                 _status.value = SyncStatus.Success
+                Log.i(TAG, "Sync finished")
             } catch (e: Exception) {
                 val error = SyncError.from(e)
+                Log.w(TAG, "Sync failed (${error.javaClass.simpleName}): ${error.message}")
                 _status.value = SyncStatus.Failure(error)
                 throw error
             }
@@ -118,12 +122,14 @@ class SyncRepository(
             } catch (e: Exception) {
                 when (val error = SyncError.from(e)) {
                     is SyncError.Data -> {
+                        Log.w(TAG, "Order ${order.id} rejected by the RPC: ${error.message}")
                         orderDao.markSendFailed(order.id, error.message ?: "error")
                         continue
                     }
                     else -> throw error
                 }
             }
+            Log.i(TAG, "Order ${order.id} sent: ${response.estado}")
             applySendResponse(order, items, response)
         }
     }
@@ -240,5 +246,9 @@ class SyncRepository(
             subtotalBs = it.subtotal_bs.toMoneyString(),
             problem = it.problema,
         )
+    }
+
+    private companion object {
+        const val TAG = "SyncRepository"
     }
 }
