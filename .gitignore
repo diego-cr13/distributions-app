@@ -28,3 +28,4 @@ Thumbs.db
 
 # Claude Code (configuración personal)
 .claude/settings.local.json
+CLAUDE.md
