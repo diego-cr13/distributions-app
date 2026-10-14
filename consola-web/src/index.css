@@ -1,4 +1,4 @@
-/* Plain CSS for the supervisor console. Tables and badges are added in later steps. */
+/* Plain CSS for the supervisor console: layout, tables, status badges and forms. */
 
 :root {
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;

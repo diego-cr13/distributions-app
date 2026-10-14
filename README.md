@@ -55,4 +55,6 @@ La app y la consola usan solo la **anon key**. La **service_role key** se usa ú
 
 ## Pendientes
 
-_(Se completa al final del día con lo que no se haya alcanzado.)_
+- **Consola web** (`specs/01-consola-web.md`): sin pendientes. Fuera de alcance por decisión: historial de días anteriores, reportes, alta de productos, gestión de clientes/vendedores, versión móvil, tests automatizados y despliegue.
+- **App Android**: por construir.
+- **Backend**: el advisor de seguridad de Supabase reporta `public.rls_auto_enable()` ejecutable por `anon`; no está en `backend/migrations/`. Revisar su origen en la próxima spec de backend.

@@ -122,24 +122,26 @@ Cada paso deja la consola arrancando con `npm run dev` y compilando con `npm run
 
 ## Criterios de aceptación
 
-- [ ] `npm run dev` arranca y `npm run build` termina sin errores de TypeScript.
-- [ ] `S-01` con la contraseña del seed entra y ve su nombre en la cabecera.
-- [ ] `V-01` con contraseña correcta ve "Solo un supervisor puede entrar a la consola" y no queda con sesión.
-- [ ] Recargar la pestaña mantiene la sesión; Salir vuelve al login.
-- [ ] Un pedido creado por SQL (simulando a `V-01`) aparece en Pedidos del día sin recargar la página.
-- [ ] Cada pedido muestra hora en La Paz, código y nombre del vendedor, cliente, ítems con cantidad, total `Bs 0.00` y etiqueta exacta de RF-5.
-- [ ] Un pedido con `recibido_en` del día anterior en La Paz no aparece en Pedidos del día.
-- [ ] Filtrar por vendedor o por cliente deja solo los pedidos de esa opción; agrupar inserta cabeceras con subtotal.
-- [ ] "Total del día" muestra cantidad de pedidos confirmados y su monto, y el desglose por vendedor suma lo mismo.
-- [ ] En Catálogo, editar `P-0001` a otro precio y guardar actualiza la fila y el valor se ve en el dashboard de Supabase.
-- [ ] Guardar un precio con 3 decimales, precio 0 o stock negativo se bloquea en la UI con mensaje en español.
-- [ ] La bandeja Problemas lista pedidos `con_problema` de cualquier fecha y muestra "Sin stock" o "Precio cambiado" por ítem.
-- [ ] Aprobar un pedido sin stock suficiente muestra el mensaje de la RPC ("Stock insuficiente: …") y el pedido sigue en la bandeja.
-- [ ] Aprobar con stock suficiente pasa el pedido a Confirmado, lo quita de la bandeja y descuenta el stock en Catálogo.
-- [ ] Rechazar con la nota vacía no llama a la RPC; con nota, el pedido pasa a Rechazado y la nota queda en `nota_supervisor`.
-- [ ] Ajustar precarga el precio vigente, recalcula el total en vivo y al confirmar el pedido queda Confirmado con `precio_aplicado_bs` igual al enviado.
-- [ ] Todo texto visible está en español y ningún monto se muestra con más o menos de 2 decimales.
-- [ ] `consola-web/.env.local` no está en git y `.env.example` sí.
+- [x] `npm run dev` arranca y `npm run build` termina sin errores de TypeScript.
+- [x] `S-01` con la contraseña del seed entra y ve su nombre en la cabecera.
+- [x] `V-01` con contraseña correcta ve "Solo un supervisor puede entrar a la consola" y no queda con sesión.
+- [x] Recargar la pestaña mantiene la sesión; Salir vuelve al login.
+- [x] Un pedido creado por SQL (simulando a `V-01`) aparece en Pedidos del día sin recargar la página.
+- [x] Cada pedido muestra hora en La Paz, código y nombre del vendedor, cliente, ítems con cantidad, total `Bs 0.00` y etiqueta exacta de RF-5.
+- [x] Un pedido con `recibido_en` del día anterior en La Paz no aparece en Pedidos del día.
+- [x] Filtrar por vendedor o por cliente deja solo los pedidos de esa opción; agrupar inserta cabeceras con subtotal.
+- [x] "Total del día" muestra cantidad de pedidos confirmados y su monto, y el desglose por vendedor suma lo mismo.
+- [x] En Catálogo, editar `P-0001` a otro precio y guardar actualiza la fila y el valor se ve en el dashboard de Supabase.
+- [x] Guardar un precio con 3 decimales, precio 0 o stock negativo se bloquea en la UI con mensaje en español.
+- [x] La bandeja Problemas lista pedidos `con_problema` de cualquier fecha y muestra "Sin stock" o "Precio cambiado" por ítem.
+- [x] Aprobar un pedido sin stock suficiente muestra el mensaje de la RPC ("Stock insuficiente: …") y el pedido sigue en la bandeja.
+- [x] Aprobar con stock suficiente pasa el pedido a Confirmado, lo quita de la bandeja y descuenta el stock en Catálogo.
+- [x] Rechazar con la nota vacía no llama a la RPC; con nota, el pedido pasa a Rechazado y la nota queda en `nota_supervisor`.
+- [x] Ajustar precarga el precio vigente, recalcula el total en vivo y al confirmar el pedido queda Confirmado con `precio_aplicado_bs` igual al enviado.
+- [x] Todo texto visible está en español y ningún monto se muestra con más o menos de 2 decimales.
+- [x] `consola-web/.env.local` no está en git y `.env.example` sí.
+
+**Cómo se verificó (2026-10-14):** `npm run build` y `npm run lint` sin errores. Los helpers (`formatBs`, `toCents`, `isValidPrice`, `startOfDayLaPaz`) se comprobaron con un script Node sobre los archivos de `src/lib/`. Lo que toca al backend se corrió de extremo a extremo contra el proyecto en la nube con `supabase-js` y la **anon key**, repitiendo exactamente las llamadas de la consola (login de `S-01` y rechazo de `V-01`, el `select` con embeds de `orders.ts`, el `update` de `Catalog.tsx`, `rpc('resolver_pedido')` con aprobar / rechazar / ajustar y el canal Realtime de `App.tsx`, que recibió los eventos INSERT y UPDATE). Los pedidos de prueba quedaron en la BD con la nota "Prueba de cierre spec 01" y sirven como datos para la app Android. Los criterios de pura interfaz (recarga de pestaña, filtros y agrupación, validaciones bloqueadas en la UI, textos en español) se verificaron leyendo `TodayOrders.tsx`, `Catalog.tsx`, `ProblemOrders.tsx` y `AdjustOrderForm.tsx`; el recorrido en navegador queda como prueba manual de §8.7 paso 2.
 
 ## Decisiones
 
