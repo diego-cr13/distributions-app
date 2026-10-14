@@ -50,6 +50,9 @@ class AuthRepository(
     /** Suspends until the stored session (if any) has been loaded. */
     suspend fun awaitInitialization() = supabase.auth.awaitInitialization()
 
+    /** True when a session (even one whose refresh failed) is loaded. */
+    fun hasSession(): Boolean = supabase.auth.currentSessionOrNull() != null
+
     /** Vendor code → login email of the seed (`V-01` → `v-01@distribuidora.test`). */
     fun emailFor(code: String): String = code.trim().lowercase() + EMAIL_DOMAIN
 

@@ -8,6 +8,7 @@ import com.distribuidora.vendedor.data.remote.SupabaseClientFactory
 import com.distribuidora.vendedor.data.repository.AuthRepository
 import com.distribuidora.vendedor.data.repository.OrderRepository
 import com.distribuidora.vendedor.data.repository.SyncRepository
+import com.distribuidora.vendedor.sync.SyncScheduler
 import io.github.jan.supabase.SupabaseClient
 
 /** Application entry point: wires the dependency graph once per process. */
@@ -20,7 +21,7 @@ class App : Application() {
 
 /**
  * Hand-rolled dependency graph (no Hilt). Everything is created lazily from the
- * application context; later steps add the remaining repositories and the sync scheduler.
+ * application context, so the worker and the UI share the same instances.
  */
 object Graph {
     private lateinit var appContext: Context
@@ -34,5 +35,6 @@ object Graph {
     val supabase: SupabaseClient by lazy { SupabaseClientFactory.create() }
     val orderRepository: OrderRepository by lazy { OrderRepository(db) }
     val authRepository: AuthRepository by lazy { AuthRepository(supabase, orderRepository, sessionStore) }
-    val syncRepository: SyncRepository by lazy { SyncRepository(supabase, db) }
+    val syncRepository: SyncRepository by lazy { SyncRepository(supabase, db, authRepository) }
+    val syncScheduler: SyncScheduler by lazy { SyncScheduler(appContext) }
 }

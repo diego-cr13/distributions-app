@@ -11,6 +11,7 @@ import com.distribuidora.vendedor.data.local.ProductDao
 import com.distribuidora.vendedor.data.local.ProductEntity
 import com.distribuidora.vendedor.data.repository.NewOrderLine
 import com.distribuidora.vendedor.data.repository.OrderRepository
+import com.distribuidora.vendedor.sync.SyncScheduler
 import java.math.BigDecimal
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,6 +39,7 @@ data class NewOrderUiState(
 @OptIn(ExperimentalCoroutinesApi::class)
 class NewOrderViewModel(
     private val orders: OrderRepository,
+    private val scheduler: SyncScheduler,
     clientDao: ClientDao,
     productDao: ProductDao,
 ) : ViewModel() {
@@ -79,7 +81,7 @@ class NewOrderViewModel(
 
     fun quantityOf(productId: String): Int = _state.value.lines[productId]?.quantity ?: 0
 
-    /** Saves the order as `pendiente`, clears the form and reports the new id. */
+    /** Saves the order as `pendiente`, enqueues the sync worker, clears the form and reports the new id. */
     fun confirm(onCreated: (orderId: String) -> Unit) {
         val current = _state.value
         val client = current.client ?: return
@@ -87,6 +89,7 @@ class NewOrderViewModel(
         _state.update { it.copy(saving = true) }
         viewModelScope.launch {
             val id = orders.createPendingOrder(client.id, current.lines.values.toList())
+            scheduler.enqueueNow()
             clientQuery.value = ""
             productQuery.value = ""
             _state.value = NewOrderUiState()

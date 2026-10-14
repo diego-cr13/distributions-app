@@ -3,9 +3,15 @@ package com.distribuidora.vendedor.ui.home
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -29,6 +35,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.distribuidora.vendedor.Graph
 import com.distribuidora.vendedor.R
+import com.distribuidora.vendedor.data.repository.SyncError
 import com.distribuidora.vendedor.data.repository.SyncStatus
 import com.distribuidora.vendedor.ui.catalog.CatalogScreen
 import com.distribuidora.vendedor.ui.clients.ClientsScreen
@@ -43,11 +50,11 @@ import com.distribuidora.vendedor.ui.orders.OrdersViewModel
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel = viewModel {
-        HomeViewModel(Graph.authRepository, Graph.syncRepository, Graph.sessionStore)
+        HomeViewModel(Graph.authRepository, Graph.syncRepository, Graph.syncScheduler, Graph.sessionStore)
     },
     ordersViewModel: OrdersViewModel = viewModel { OrdersViewModel(Graph.orderRepository) },
     newOrderViewModel: NewOrderViewModel = viewModel {
-        NewOrderViewModel(Graph.orderRepository, Graph.db.clientDao(), Graph.db.productDao())
+        NewOrderViewModel(Graph.orderRepository, Graph.syncScheduler, Graph.db.clientDao(), Graph.db.productDao())
     },
 ) {
     val vendor by viewModel.vendor.collectAsStateWithLifecycle()
@@ -56,12 +63,27 @@ fun HomeScreen(
     var tab by rememberSaveable { mutableStateOf(HomeTab.Orders) }
     var selectedOrderId by rememberSaveable { mutableStateOf<String?>(null) }
     val snackbar = remember { SnackbarHostState() }
+    val syncDoneText = stringResource(R.string.sync_done)
     val syncFailedText = stringResource(R.string.sync_failed)
+    val noNetworkText = stringResource(R.string.login_error_no_network)
+
+    LaunchedEffect(Unit) { viewModel.onEnter() }
 
     LaunchedEffect(syncStatus) {
-        if (syncStatus is SyncStatus.Failure) {
-            viewModel.clearSyncStatus()
-            snackbar.showSnackbar(syncFailedText)
+        when (val status = syncStatus) {
+            is SyncStatus.Success -> {
+                viewModel.clearSyncStatus()
+                snackbar.showSnackbar(syncDoneText)
+            }
+            is SyncStatus.Failure -> {
+                viewModel.clearSyncStatus()
+                val detail = when (val error = status.error) {
+                    is SyncError.Network -> noNetworkText
+                    else -> error.message ?: ""
+                }
+                snackbar.showSnackbar("$syncFailedText: $detail")
+            }
+            else -> Unit
         }
     }
 
@@ -93,6 +115,21 @@ fun HomeScreen(
                     }
                 },
                 actions = {
+                    if (syncStatus is SyncStatus.Running) {
+                        CircularProgressIndicator(
+                            modifier = Modifier
+                                .padding(horizontal = 12.dp)
+                                .size(22.dp),
+                            strokeWidth = 2.dp,
+                        )
+                    } else {
+                        IconButton(onClick = viewModel::syncNow) {
+                            Icon(
+                                Icons.Default.Refresh,
+                                contentDescription = stringResource(R.string.home_sync_now),
+                            )
+                        }
+                    }
                     TextButton(onClick = viewModel::logout) {
                         Text(stringResource(R.string.home_logout))
                     }

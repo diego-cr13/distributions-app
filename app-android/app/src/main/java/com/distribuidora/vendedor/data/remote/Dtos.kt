@@ -63,6 +63,40 @@ data class OrderDto(
     val pedido_items: List<OrderItemDto> = emptyList(),
 )
 
+/** Payload of `rpc("enviar_pedido")`. `p_creado_en` is UTC ISO-8601 (`Z` offset). */
+@Serializable
+data class SendOrderRequest(
+    val p_id: String,
+    val p_cliente_id: String,
+    val p_creado_en: String,
+    val p_items: List<SendOrderItem>,
+)
+
+/** One line of the payload; `precio_visto_bs` is emitted as a 2-decimal numeric literal. */
+@Serializable
+data class SendOrderItem(
+    val producto_id: String,
+    val cantidad: Int,
+    @Serializable(with = BigDecimalSerializer::class) val precio_visto_bs: BigDecimal,
+)
+
+/** Exact shape returned by `enviar_pedido` (also on an idempotent retry). */
+@Serializable
+data class SendOrderResponse(
+    val id: String,
+    val estado: String,
+    val motivo: String? = null,
+    @Serializable(with = BigDecimalSerializer::class) val total_bs: BigDecimal,
+    val items: List<SendOrderResponseItem> = emptyList(),
+)
+
+@Serializable
+data class SendOrderResponseItem(
+    val producto_id: String,
+    val problema: String? = null,
+    @Serializable(with = BigDecimalSerializer::class) val precio_vigente_bs: BigDecimal? = null,
+)
+
 /** Row of `pedido_items`. */
 @Serializable
 data class OrderItemDto(

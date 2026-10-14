@@ -1,5 +1,7 @@
 package com.distribuidora.vendedor.data.repository
 
+import com.distribuidora.vendedor.core.OrderStatus
+import com.distribuidora.vendedor.core.toMoney
 import com.distribuidora.vendedor.core.toMoneyString
 import com.distribuidora.vendedor.core.toUtc
 import com.distribuidora.vendedor.data.local.AppDatabase
@@ -11,11 +13,16 @@ import com.distribuidora.vendedor.data.local.SyncMetaEntity
 import com.distribuidora.vendedor.data.remote.ClientDto
 import com.distribuidora.vendedor.data.remote.OrderDto
 import com.distribuidora.vendedor.data.remote.ProductDto
+import com.distribuidora.vendedor.data.remote.SendOrderItem
+import com.distribuidora.vendedor.data.remote.SendOrderRequest
+import com.distribuidora.vendedor.data.remote.SendOrderResponse
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
 import io.github.jan.supabase.postgrest.query.Columns
 import io.github.jan.supabase.postgrest.query.Order
 import io.github.jan.supabase.postgrest.query.PostgrestRequestBuilder
+import io.github.jan.supabase.postgrest.rpc
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.sync.Mutex
@@ -26,16 +33,17 @@ sealed class SyncStatus {
     data object Idle : SyncStatus()
     data object Running : SyncStatus()
     data object Success : SyncStatus()
-    data class Failure(val error: Throwable) : SyncStatus()
+    data class Failure(val error: SyncError) : SyncStatus()
 }
 
 /**
- * RF-2 / RF-4: download of catalog, clients and own orders by delta over
- * `actualizado_en`, and (step 8) upload of pending orders. The server always wins.
+ * RF-2 / RF-4: upload of pending orders through `enviar_pedido`, then download of
+ * catalog, clients and own orders by delta over `actualizado_en`. The server always wins.
  */
 class SyncRepository(
     private val supabase: SupabaseClient,
     private val db: AppDatabase,
+    private val auth: AuthRepository,
 ) {
     private val _status = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
     val status: StateFlow<SyncStatus> = _status
@@ -44,25 +52,98 @@ class SyncRepository(
     private val syncMutex = Mutex()
 
     /**
-     * Full sync. Runs the steps in order and records the outcome in [status].
-     * Throws the error after recording it so callers can classify it.
+     * Full sync: own profile check → upload pending → download catalog → download
+     * orders. Records the outcome in [status] and rethrows it as a [SyncError].
      */
     suspend fun syncAll() {
         syncMutex.withLock {
             _status.value = SyncStatus.Running
             try {
+                checkProfile()
+                uploadPending()
                 downloadCatalog()
                 downloadOwnOrders()
                 _status.value = SyncStatus.Success
             } catch (e: Exception) {
-                _status.value = SyncStatus.Failure(e)
-                throw e
+                val error = SyncError.from(e)
+                _status.value = SyncStatus.Failure(error)
+                throw error
             }
         }
     }
 
     fun clearStatus() {
         _status.value = SyncStatus.Idle
+    }
+
+    /**
+     * RLS returns no row (not an error) for an inactive vendor, so reading the own
+     * profile first is the only way to detect a deactivated account.
+     */
+    suspend fun checkProfile() {
+        val profile = try {
+            auth.fetchOwnProfile()
+        } catch (e: Exception) {
+            throw SyncError.from(e)
+        }
+        if (profile == null || !profile.isVendor) {
+            throw SyncError.Auth("inactive or non-vendor profile")
+        }
+    }
+
+    /**
+     * Sends every `pendiente` order, oldest first, with its own uuid (idempotent on
+     * the server). A response updates status, reason, total and per-item problems.
+     * A [SyncError.Data] marks the order (`attempts + 1`, `lastError`) and continues
+     * with the next one; network and auth errors stop the upload.
+     */
+    suspend fun uploadPending() {
+        val orderDao = db.orderDao()
+        for (order in orderDao.getPending()) {
+            val items = orderDao.getItems(order.id)
+            val request = SendOrderRequest(
+                p_id = order.id,
+                p_cliente_id = order.clientId,
+                p_creado_en = order.createdOnDevice,
+                p_items = items.map {
+                    SendOrderItem(
+                        producto_id = it.productId,
+                        cantidad = it.quantity,
+                        precio_visto_bs = it.priceSeenBs.toMoney(),
+                    )
+                },
+            )
+            val response = try {
+                supabase.postgrest.rpc("enviar_pedido", request).decodeAs<SendOrderResponse>()
+            } catch (e: Exception) {
+                when (val error = SyncError.from(e)) {
+                    is SyncError.Data -> {
+                        orderDao.markSendFailed(order.id, error.message ?: "error")
+                        continue
+                    }
+                    else -> throw error
+                }
+            }
+            applySendResponse(order, items, response)
+        }
+    }
+
+    private suspend fun applySendResponse(
+        order: OrderEntity,
+        items: List<OrderItemEntity>,
+        response: SendOrderResponse,
+    ) {
+        val problems = response.items.associate { it.producto_id to it.problema }
+        val updatedItems = items.map { it.copy(problem = problems[it.productId]) }
+        db.orderDao().replaceFromServer(
+            order.copy(
+                status = response.estado.ifBlank { OrderStatus.SENT },
+                reason = response.motivo,
+                totalBs = response.total_bs.toMoneyString(),
+                lastError = null,
+            ),
+            updatedItems,
+        )
     }
 
     /** Products and clients changed since the last sync, upserted into Room. */
