@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- All user-facing text lives here, in Spanish (the only locale of the MVP). -->
+<resources>
+    <string name="app_name">Vendedores</string>
+
+    <!-- Login (RF-1) -->
+    <string name="login_subtitle">Distribuidora · pedidos</string>
+    <string name="login_code_label">Código de vendedor</string>
+    <string name="login_code_placeholder">V-01</string>
+    <string name="login_password_label">Contraseña</string>
+    <string name="login_button">Entrar</string>
+    <string name="login_error_no_network">No hay conexión</string>
+    <string name="login_error_invalid_credentials">Código o contraseña incorrectos</string>
+    <string name="login_error_not_vendor">Solo un vendedor activo puede entrar a la app</string>
+    <string name="login_error_generic">No se pudo iniciar sesión: %1$s</string>
+    <string name="login_error_inactive">Tu cuenta no está activa</string>
+
+    <string name="login_syncing">Descargando catálogo…</string>
+
+    <!-- Home -->
+    <string name="home_logout">Salir</string>
+    <string name="home_sync_now">Sincronizar ahora</string>
+    <string name="logout_blocked">Sincroniza antes de salir</string>
+    <string name="tab_orders">Pedidos</string>
+    <string name="tab_new_order">Nuevo</string>
+    <string name="tab_catalog">Catálogo</string>
+    <string name="tab_clients">Clientes</string>
+
+    <!-- Sync -->
+    <string name="sync_failed">No se pudo sincronizar</string>
+    <string name="sync_done">Sincronizado</string>
+
+    <!-- Catalog and clients (RF-2) -->
+    <string name="catalog_search_hint">Buscar producto</string>
+    <string name="catalog_empty">Sin productos todavía</string>
+    <string name="catalog_stock">Stock: %1$d</string>
+    <string name="clients_search_hint">Buscar cliente</string>
+    <string name="clients_empty">Sin clientes todavía</string>
+    <string name="search_no_results">Sin resultados</string>
+    <string name="search_clear">Borrar búsqueda</string>
+
+    <!-- Orders (RF-5) -->
+    <string name="orders_empty">Sin pedidos todavía</string>
+    <plurals name="orders_item_count">
+        <item quantity="one">%1$d ítem</item>
+        <item quantity="other">%1$d ítems</item>
+    </plurals>
+    <string name="order_detail_title">Detalle del pedido</string>
+    <string name="order_detail_created">Creado: %1$s</string>
+    <string name="order_detail_received">Recibido: %1$s</string>
+    <string name="order_detail_total">Total: %1$s</string>
+    <string name="order_detail_reason">Motivo</string>
+    <string name="order_detail_supervisor_note">Nota del supervisor</string>
+    <string name="order_detail_last_error">Último envío: %1$s</string>
+    <string name="order_detail_items">Ítems</string>
+    <string name="order_item_price_seen">Precio visto: %1$s</string>
+    <string name="order_item_prices_changed">Precio visto: %1$s · aplicado: %2$s</string>
+    <string name="back">Volver</string>
+
+    <!-- New order (RF-3) -->
+    <string name="new_order_pick_client">Elegí el cliente</string>
+    <string name="new_order_client">Cliente</string>
+    <string name="new_order_change_client">Cambiar</string>
+    <string name="new_order_stock_warning">Stock local: %1$d</string>
+    <string name="new_order_total">Total: %1$s</string>
+    <string name="new_order_confirm">Confirmar</string>
+
+    <!-- Order status labels, exactly as RF-5 -->
+    <string name="status_pending">Pendiente de envío</string>
+    <string name="status_sent">Enviado</string>
+    <string name="status_confirmed">Confirmado</string>
+    <string name="status_with_problem">Con problema</string>
+    <string name="status_rejected">Rechazado</string>
+    <string name="status_unknown">Desconocido</string>
+
+    <!-- Per-item problems -->
+    <string name="problem_out_of_stock">Sin stock</string>
+    <string name="problem_price_changed">Precio cambiado</string>
+    <string name="problem_unknown">Problema desconocido</string>
+</resources>
