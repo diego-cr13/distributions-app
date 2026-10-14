@@ -30,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -51,7 +52,13 @@ import com.distribuidora.vendedor.ui.orders.OrdersViewModel
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel = viewModel {
-        HomeViewModel(Graph.authRepository, Graph.syncRepository, Graph.syncScheduler, Graph.sessionStore)
+        HomeViewModel(
+            Graph.authRepository,
+            Graph.orderRepository,
+            Graph.syncRepository,
+            Graph.syncScheduler,
+            Graph.sessionStore,
+        )
     },
     ordersViewModel: OrdersViewModel = viewModel { OrdersViewModel(Graph.orderRepository) },
     newOrderViewModel: NewOrderViewModel = viewModel {
@@ -69,6 +76,14 @@ fun HomeScreen(
     val noNetworkText = stringResource(R.string.login_error_no_network)
 
     LaunchedEffect(Unit) { viewModel.onEnter() }
+
+    val message by viewModel.message.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    LaunchedEffect(message) {
+        val res = message ?: return@LaunchedEffect
+        snackbar.showSnackbar(context.getString(res), duration = SnackbarDuration.Short)
+        viewModel.consumeMessage()
+    }
 
     // The status is cleared only after the snackbar was shown: clearing first would
     // restart this effect (keyed on the status) and cancel the snackbar.

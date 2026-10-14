@@ -20,6 +20,7 @@
     <!-- Home -->
     <string name="home_logout">Salir</string>
     <string name="home_sync_now">Sincronizar ahora</string>
+    <string name="logout_blocked">Sincroniza antes de salir</string>
     <string name="tab_orders">Pedidos</string>
     <string name="tab_new_order">Nuevo</string>
     <string name="tab_catalog">Catálogo</string>

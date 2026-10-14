@@ -71,6 +71,10 @@ class SyncRepository(
                 val error = SyncError.from(e)
                 Log.w(TAG, "Sync failed (${error.javaClass.simpleName}): ${error.message}")
                 _status.value = SyncStatus.Failure(error)
+                if (error is SyncError.Auth) {
+                    // Session invalid or account deactivated: back to Login, keeping local orders.
+                    auth.forceLogout()
+                }
                 throw error
             }
         }

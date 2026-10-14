@@ -55,7 +55,8 @@ class LoginViewModel(
             } catch (_: Exception) {
                 // Recorded in SyncRepository.status; Home shows the notice.
             } finally {
-                _state.update { it.copy(syncing = false) }
+                // Fresh form for the next login (the ViewModel outlives the screen).
+                _state.value = LoginUiState()
                 auth.finishLogin()
             }
         }

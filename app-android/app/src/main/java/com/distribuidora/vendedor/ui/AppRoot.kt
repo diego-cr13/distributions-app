@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.distribuidora.vendedor.Graph
 import com.distribuidora.vendedor.data.repository.LoginPhase
@@ -30,6 +31,7 @@ enum class Screen { Login, Home }
 fun AppRoot() {
     val status by Graph.authRepository.sessionStatus.collectAsStateWithLifecycle()
     val loginPhase by Graph.authRepository.loginPhase.collectAsStateWithLifecycle()
+    val loginNotice by Graph.authRepository.loginNotice.collectAsStateWithLifecycle()
     var screen by rememberSaveable { mutableStateOf<Screen?>(null) }
 
     when (status) {
@@ -42,7 +44,7 @@ fun AppRoot() {
 
     Surface(modifier = Modifier.fillMaxSize()) {
         when (effective) {
-            Screen.Login -> LoginScreen()
+            Screen.Login -> LoginScreen(message = loginNotice?.let { stringResource(it) })
             Screen.Home -> HomeScreen()
             null -> Box(modifier = Modifier.fillMaxSize())
         }

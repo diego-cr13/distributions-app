@@ -42,6 +42,11 @@ class AuthRepository(
     private val _loginPhase = MutableStateFlow(LoginPhase.Idle)
     val loginPhase: StateFlow<LoginPhase> = _loginPhase
 
+    private val _loginNotice = MutableStateFlow<Int?>(null)
+
+    /** Message resource the Login screen shows after a forced logout ("Tu cuenta no está activa"). */
+    val loginNotice: StateFlow<Int?> = _loginNotice
+
     /** Called by the login flow once the initial sync finished (or failed). */
     fun finishLogin() {
         _loginPhase.value = LoginPhase.Idle
@@ -62,6 +67,7 @@ class AuthRepository(
      */
     suspend fun login(code: String, password: String) {
         _loginPhase.value = LoginPhase.SigningIn
+        _loginNotice.value = null
         try {
             try {
                 supabase.auth.signInWith(Email) {
@@ -123,8 +129,10 @@ class AuthRepository(
     /**
      * Forced logout when the account is no longer valid (HTTP 401/403 or no profile
      * row): local orders are kept so they survive until the vendor is reactivated.
+     * The Login screen then shows "Tu cuenta no está activa".
      */
     suspend fun forceLogout() {
+        _loginNotice.value = R.string.login_error_inactive
         sessionStore.clear()
         signOutQuietly()
     }
