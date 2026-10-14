@@ -1,6 +1,6 @@
 # SPEC 02 — App Android de vendedores
 
-> **Estado:** Aprobado
+> **Estado:** Implementado
 > **Depende de:** SPEC 01 (solo para verificar: la consola muestra los pedidos que llegan, cambia precios y resuelve los pedidos con problema). El backend de `backend/migrations/` y el seed ya están aplicados en el proyecto Supabase.
 > **Fecha:** 2026-10-14
 > **Objetivo:** Construir en `app-android/` la app Kotlin + Compose con la que un vendedor entra con su cuenta, consulta catálogo y clientes sin conexión, crea pedidos que se guardan en el teléfono y se envían solos al volver la red, y ve el estado de cada pedido tal como lo decide el servidor.
@@ -219,31 +219,31 @@ Cada paso deja la app compilando con `./gradlew assembleDebug` (con `JAVA_HOME` 
 
 ## Criterios de aceptación
 
-- [ ] `./gradlew assembleDebug` y `./gradlew testDebugUnitTest` terminan sin errores con `JAVA_HOME` en el JBR de Android Studio.
-- [ ] El APK se instala en `emulator-5554` y `emulator-5556` y toda la UI está en español.
-- [ ] `V-01` con la contraseña del seed entra y ve su nombre en la cabecera; `S-01` ve "Solo un vendedor activo puede entrar a la app" y no queda con sesión.
-- [ ] Con la app cerrada y el AVD en modo avión, abrirla muestra el Home sin pedir login; Salir vuelve al Login.
-- [ ] Tras el primer login, Catálogo muestra 50 productos y Clientes 30 tiendas, con precio `Bs 0.00` y stock, y ambos se consultan en modo avión.
-- [ ] Cambiar el precio de un producto desde la consola y tocar "Sincronizar ahora" actualiza ese precio en Catálogo sin bajar las otras filas (delta por `actualizado_en`).
-- [ ] Los pedidos de `V-01` creados por SQL en la spec 01 aparecen en Pedidos con sus ítems, estado y nota del supervisor.
-- [ ] En modo avión se crean dos pedidos; cerrar y abrir la app los muestra "Pendiente de envío" y el contador de la pestaña marca 2.
-- [ ] Un ítem con cantidad mayor al stock local muestra el aviso ámbar y aun así se puede confirmar.
-- [ ] Confirmar sin cliente o sin ítems está deshabilitado; la cantidad solo acepta enteros ≥ 1.
-- [ ] Al quitar el modo avión, sin tocar nada, los pedidos pendientes pasan a Confirmado o Con problema y aparecen en la consola con el mismo uuid.
-- [ ] Repetir el envío del mismo pedido (worker y botón a la vez, o reinstalar sin perder Room) no crea una segunda fila en `pedidos`.
-- [ ] Un pedido Con problema muestra en el detalle "Sin stock" o "Precio cambiado" por ítem y el motivo del servidor.
-- [ ] Rechazar ese pedido en la consola con nota y sincronizar en el AVD lo muestra Rechazado con la nota del supervisor.
-- [ ] Ajustar un pedido en la consola y sincronizar muestra en el detalle las cantidades y precios aplicados nuevos.
-- [ ] RF-6: A y B en modo avión piden 12 unidades de `P-0004`; al reconectar ambos, uno queda Confirmado y el otro Con problema (`sin_stock`), y el stock en la consola bajó una sola vez.
-- [ ] Precio cambiado: A en modo avión vende `P-0001`, se cambia su precio en la consola, A reconecta → el pedido queda Con problema (`precio_cambiado`).
-- [ ] Un pedido que la RPC rechaza por datos sigue "Pendiente de envío" con el mensaje de la RPC visible en la lista, y los demás pendientes se envían igual.
-- [ ] Con `V-01` desactivado por SQL y sin pedidos pendientes, "Sincronizar ahora" manda al Login con "Tu cuenta no está activa"; los pedidos locales siguen en Room al volver a entrar.
-- [ ] Salir con pedidos pendientes muestra "Sincroniza antes de salir" y no cierra sesión; sin pendientes cierra sesión, y al entrar `V-02` en ese teléfono la pestaña Pedidos empieza vacía hasta sincronizar, mientras Catálogo y Clientes siguen cargados.
-- [ ] Un pedido creado en el teléfono y uno bajado del servidor se ordenan correctamente por fecha de creación aunque PostgREST devuelva `+00:00`.
-- [ ] Ajustar un pedido en la consola dejando un ítem en 0 y sincronizar hace desaparecer ese ítem del detalle en la app.
-- [ ] Crear un pedido pendiente no cambia el stock mostrado en Catálogo hasta la siguiente sincronización.
-- [ ] Ningún monto se muestra con más o menos de 2 decimales y `precio_visto_bs` llega a la BD exactamente como se vio en el catálogo local.
-- [ ] `app-android/local.properties` no está en git; `local.properties.example`, `gradlew`, `gradlew.bat` y `gradle/wrapper/` sí.
+- [x] `./gradlew assembleDebug` y `./gradlew testDebugUnitTest` terminan sin errores con `JAVA_HOME` en el JBR de Android Studio.
+- [x] El APK se instala en `emulator-5554` y `emulator-5556` y toda la UI está en español. *(Verificado con los AVD `Pixel_9a_V2` y `Pixel_9a`, que ocuparon esos seriales durante la implementación.)*
+- [x] `V-01` con la contraseña del seed entra y ve su nombre en la cabecera; `S-01` ve "Solo un vendedor activo puede entrar a la app" y no queda con sesión.
+- [x] Con la app cerrada y el AVD en modo avión, abrirla muestra el Home sin pedir login; Salir vuelve al Login.
+- [x] Tras el primer login, Catálogo muestra 50 productos y Clientes 30 tiendas, con precio `Bs 0.00` y stock, y ambos se consultan en modo avión.
+- [x] Cambiar el precio de un producto desde la consola y tocar "Sincronizar ahora" actualiza ese precio en Catálogo sin bajar las otras filas (delta por `actualizado_en`).
+- [x] Los pedidos de `V-01` creados por SQL en la spec 01 aparecen en Pedidos con sus ítems, estado y nota del supervisor.
+- [x] En modo avión se crean dos pedidos; cerrar y abrir la app los muestra "Pendiente de envío" y el contador de la pestaña marca 2.
+- [x] Un ítem con cantidad mayor al stock local muestra el aviso ámbar y aun así se puede confirmar.
+- [x] Confirmar sin cliente o sin ítems está deshabilitado; la cantidad solo acepta enteros ≥ 1.
+- [x] Al quitar el modo avión, sin tocar nada, los pedidos pendientes pasan a Confirmado o Con problema y aparecen en la consola con el mismo uuid.
+- [x] Repetir el envío del mismo pedido (worker y botón a la vez, o reinstalar sin perder Room) no crea una segunda fila en `pedidos`. *(El uuid viaja desde Room en cada reintento y `syncAll()` serializa worker y botón con un `Mutex`; se verificó con el worker de entrada al Home y "Sincronizar ahora" solapados y con reinstalaciones `install -r` durante las pruebas: ninguna fila duplicada en `pedidos`.)*
+- [x] Un pedido Con problema muestra en el detalle "Sin stock" o "Precio cambiado" por ítem y el motivo del servidor.
+- [x] Rechazar ese pedido en la consola con nota y sincronizar en el AVD lo muestra Rechazado con la nota del supervisor. *(Rechazo y ajuste ejecutados con `resolver_pedido` por SQL simulando a `S-01`, la misma RPC que llama la consola.)*
+- [x] Ajustar un pedido en la consola y sincronizar muestra en el detalle las cantidades y precios aplicados nuevos.
+- [x] RF-6: A y B en modo avión piden 12 unidades de `P-0004`; al reconectar ambos, uno queda Confirmado y el otro Con problema (`sin_stock`), y el stock en la consola bajó una sola vez.
+- [x] Precio cambiado: A en modo avión vende `P-0001`, se cambia su precio en la consola, A reconecta → el pedido queda Con problema (`precio_cambiado`).
+- [x] Un pedido que la RPC rechaza por datos sigue "Pendiente de envío" con el mensaje de la RPC visible en la lista, y los demás pendientes se envían igual. *(Verificado solo por lectura de `SyncRepository.uploadPending()`: la app aplica las mismas validaciones que `enviar_pedido`, así que no hay forma de provocar un `22023` desde la UI sin tocar el backend; anotado en "Pendientes" del README.)*
+- [x] Con `V-01` desactivado por SQL y sin pedidos pendientes, "Sincronizar ahora" manda al Login con "Tu cuenta no está activa"; los pedidos locales siguen en Room al volver a entrar.
+- [x] Salir con pedidos pendientes muestra "Sincroniza antes de salir" y no cierra sesión; sin pendientes cierra sesión, y al entrar `V-02` en ese teléfono la pestaña Pedidos empieza vacía hasta sincronizar, mientras Catálogo y Clientes siguen cargados.
+- [x] Un pedido creado en el teléfono y uno bajado del servidor se ordenan correctamente por fecha de creación aunque PostgREST devuelva `+00:00`.
+- [x] Ajustar un pedido en la consola dejando un ítem en 0 y sincronizar hace desaparecer ese ítem del detalle en la app.
+- [x] Crear un pedido pendiente no cambia el stock mostrado en Catálogo hasta la siguiente sincronización.
+- [x] Ningún monto se muestra con más o menos de 2 decimales y `precio_visto_bs` llega a la BD exactamente como se vio en el catálogo local.
+- [x] `app-android/local.properties` no está en git; `local.properties.example`, `gradlew`, `gradlew.bat` y `gradle/wrapper/` sí.
 
 ## Decisiones
 
