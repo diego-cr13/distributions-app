@@ -1,0 +1,30 @@
+# Configuración con secretos (se commitean solo los .example)
+.env
+.env.local
+.env.*.local
+local.properties
+
+# Node
+node_modules/
+dist/
+npm-debug.log*
+
+# Android / Gradle
+build/
+.gradle/
+.kotlin/
+*.apk
+*.aab
+captures/
+.externalNativeBuild/
+.cxx/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Claude Code (configuración personal)
+.claude/settings.local.json

@@ -1,0 +1,15 @@
+{
+  "name": "distribuidora-backend-scripts",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "gen-seed": "node gen_seed.mjs",
+    "seed-usuarios": "node seed_usuarios.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.117.3"
+  }
+}
